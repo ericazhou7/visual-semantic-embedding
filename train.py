@@ -65,24 +65,24 @@ def trainer(data='coco',  #f8k, f30k, coco
     model_options['lrate'] = lrate
     model_options['reload_'] = reload_
 
-    print model_options
+    print(model_options)
 
     # reload options
     if reload_ and os.path.exists(saveto):
-        print 'reloading...' + saveto
+        print('reloading...' + saveto)
         with open('%s.pkl'%saveto, 'rb') as f:
             models_options = pkl.load(f)
 
     # Load training and development sets
-    print 'Loading dataset'
+    print('Loading dataset')
     train, dev = load_dataset(data)[:2]
 
     # Create and save dictionary
-    print 'Creating dictionary'
+    print('Creating dictionary')
     worddict = build_dictionary(train[0]+dev[0])[0]
     n_words = len(worddict)
     model_options['n_words'] = n_words
-    print 'Dictionary size: ' + str(n_words)
+    print('Dictionary size: ' + str(n_words))
     with open('%s.dictionary.pkl'%saveto, 'wb') as f:
         pkl.dump(worddict, f)
 
@@ -93,7 +93,7 @@ def trainer(data='coco',  #f8k, f30k, coco
     word_idict[0] = '<eos>'
     word_idict[1] = 'UNK'
 
-    print 'Building model'
+    print('Building model')
     params = init_params(model_options)
     # reload parameters
     if reload_ and os.path.exists(saveto):
@@ -104,9 +104,9 @@ def trainer(data='coco',  #f8k, f30k, coco
     trng, inps, cost = build_model(tparams, model_options)
 
     # before any regularizer
-    print 'Building f_log_probs...',
+    print('Building f_log_probs...',)
     f_log_probs = theano.function(inps, cost, profile=False)
-    print 'Done'
+    print('Done')
 
     # weight decay, if applicable
     if decay_c > 0.:
@@ -118,19 +118,19 @@ def trainer(data='coco',  #f8k, f30k, coco
         cost += weight_decay
 
     # after any regularizer
-    print 'Building f_cost...',
+    print('Building f_cost...',)
     f_cost = theano.function(inps, cost, profile=False)
-    print 'Done'
+    print('Done')
 
-    print 'Building sentence encoder'
+    print('Building sentence encoder')
     trng, inps_se, sentences = build_sentence_encoder(tparams, model_options)
     f_senc = theano.function(inps_se, sentences, profile=False)
 
-    print 'Building image encoder'
+    print('Building image encoder')
     trng, inps_ie, images = build_image_encoder(tparams, model_options)
     f_ienc = theano.function(inps_ie, images, profile=False)
 
-    print 'Building f_grad...',
+    print('Building f_grad...',)
     grads = tensor.grad(cost, wrt=itemlist(tparams))
     f_grad_norm = theano.function(inps, [(g**2).sum() for g in grads], profile=False)
     f_weight_norm = theano.function([], [(t**2).sum() for k,t in tparams.iteritems()], profile=False)
@@ -147,11 +147,11 @@ def trainer(data='coco',  #f8k, f30k, coco
         grads = new_grads
 
     lr = tensor.scalar(name='lr')
-    print 'Building optimizers...',
+    print('Building optimizers...',)
     # (compute gradients), (updates parameters)
     f_grad_shared, f_update = eval(optimizer)(lr, tparams, grads, inps, cost)
 
-    print 'Optimization'
+    print('Optimization')
 
     # Each sentence in the minibatch have same length (for encoder)
     train_iter = homogeneous_data.HomogeneousData([train[0], train[1]], batch_size=batch_size, maxlen=maxlen_w)
@@ -162,7 +162,7 @@ def trainer(data='coco',  #f8k, f30k, coco
     
     for eidx in xrange(max_epochs):
 
-        print 'Epoch ', eidx
+        print('Epoch ', eidx)
 
         for x, im in train_iter:
             n_samples += len(x)
@@ -171,7 +171,7 @@ def trainer(data='coco',  #f8k, f30k, coco
             x, mask, im = homogeneous_data.prepare_data(x, im, worddict, maxlen=maxlen_w, n_words=n_words)
 
             if x == None:
-                print 'Minibatch with zero sample under length ', maxlen_w
+                print('Minibatch with zero sample under length ', maxlen_w)
                 uidx -= 1
                 continue
 
@@ -182,15 +182,15 @@ def trainer(data='coco',  #f8k, f30k, coco
             ud = time.time() - ud_start
 
             if numpy.isnan(cost) or numpy.isinf(cost):
-                print 'NaN detected'
+                print('NaN detected')
                 return 1., 1., 1.
 
             if numpy.mod(uidx, dispFreq) == 0:
-                print 'Epoch ', eidx, 'Update ', uidx, 'Cost ', cost, 'UD ', ud
+                print('Epoch ', eidx, 'Update ', uidx, 'Cost ', cost, 'UD ', ud)
 
             if numpy.mod(uidx, validFreq) == 0:
 
-                print 'Computing results...'
+                print('Computing results...')
                 curr_model = {}
                 curr_model['options'] = model_options
                 curr_model['worddict'] = worddict
@@ -202,22 +202,22 @@ def trainer(data='coco',  #f8k, f30k, coco
                 lim = encode_images(curr_model, dev[1])
 
                 (r1, r5, r10, medr) = i2t(lim, ls)
-                print "Image to text: %.1f, %.1f, %.1f, %.1f" % (r1, r5, r10, medr)
+                print("Image to text: %.1f, %.1f, %.1f, %.1f" % (r1, r5, r10, medr))
                 (r1i, r5i, r10i, medri) = t2i(lim, ls)
-                print "Text to image: %.1f, %.1f, %.1f, %.1f" % (r1i, r5i, r10i, medri)
+                print("Text to image: %.1f, %.1f, %.1f, %.1f" % (r1i, r5i, r10i, medri))
 
                 currscore = r1 + r5 + r10 + r1i + r5i + r10i
                 if currscore > curr:
                     curr = currscore
 
                     # Save model
-                    print 'Saving...',
+                    print('Saving...',)
                     params = unzip(tparams)
                     numpy.savez(saveto, **params)
                     pkl.dump(model_options, open('%s.pkl'%saveto, 'wb'))
-                    print 'Done'
+                    print('Done')
 
-        print 'Seen %d samples'%n_samples
+        print('Seen %d samples'%n_samples)
 
 if __name__ == '__main__':
     pass

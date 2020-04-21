@@ -6,15 +6,15 @@ import numpy
 #-----------------------------------------------------------------------------#
 # Specify dataset(s) location here
 #-----------------------------------------------------------------------------#
-path_to_data = '/ais/gobi3/u/rkiros/uvsdata/'
+path_to_data = '/Users/ericazhou/Dropbox (MIT)/MIT/MEng/Semester 2/6.864/project/data/vse'
 #-----------------------------------------------------------------------------#
 
-def load_dataset(name='f8k', load_train=True):
+def load_dataset(name='coco', load_train=True):
     """
     Load captions and image features
     Possible options: f8k, f30k, coco
     """
-    loc = path_to_data + name + '/'
+    loc = path_to_data + '/'
     
     # Captions
     train_caps, dev_caps, test_caps = [],[],[]

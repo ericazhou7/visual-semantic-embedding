@@ -5,7 +5,10 @@ import theano
 import theano.tensor as tensor
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 
-import cPickle as pkl
+try:
+   import cPickle as pkl
+except:
+   import pickle as pkl
 import numpy
 
 from collections import OrderedDict, defaultdict
@@ -17,51 +20,51 @@ from model import init_params, build_sentence_encoder, build_image_encoder
 #-----------------------------------------------------------------------------#
 # Specify model location here
 #-----------------------------------------------------------------------------#
-default_model = '/ais/gobi3/u/rkiros/uvsmodels/coco.npz'
+default_model = '/Users/ericazhou/Dropbox (MIT)/MIT/MEng/Semester 2/6.864/project/visual-semantic-embedding/models/coco.npz'
 #-----------------------------------------------------------------------------#
 
 def load_model(path_to_model=default_model):
     """
     Load all model components
     """
-    print path_to_model
+    print(path_to_model)
 
     # Load the worddict
-    print 'Loading dictionary...'
+    print('Loading dictionary...')
     with open('%s.dictionary.pkl'%path_to_model, 'rb') as f:
         worddict = pkl.load(f)
 
     # Create inverted dictionary
-    print 'Creating inverted dictionary...'
+    print('Creating inverted dictionary...')
     word_idict = dict()
-    for kk, vv in worddict.iteritems():
+    for kk, vv in worddict.items():
         word_idict[vv] = kk
     word_idict[0] = '<eos>'
     word_idict[1] = 'UNK'
 
     # Load model options
-    print 'Loading model options...'
+    print('Loading model options...')
     with open('%s.pkl'%path_to_model, 'rb') as f:
         options = pkl.load(f)
 
     # Load parameters
-    print 'Loading model parameters...'
+    print('Loading model parameters...')
     params = init_params(options)
     params = load_params(path_to_model, params)
     tparams = init_tparams(params)
 
     # Extractor functions
-    print 'Compiling sentence encoder...'
+    print('Compiling sentence encoder...')
     trng = RandomStreams(1234)
     trng, [x, x_mask], sentences = build_sentence_encoder(tparams, options)
     f_senc = theano.function([x, x_mask], sentences, name='f_senc')
 
-    print 'Compiling image encoder...'
+    print('Compiling image encoder...')
     trng, [im], images = build_image_encoder(tparams, options)
     f_ienc = theano.function([im], images, name='f_ienc')
 
     # Store everything we need in a dictionary
-    print 'Packing up...'
+    print('Packing up...')
     model = {}
     model['options'] = options
     model['worddict'] = worddict
@@ -90,8 +93,8 @@ def encode_sentences(model, X, verbose=False, batch_size=128):
     # Get features. This encodes by length, in order to avoid wasting computation
     for k in ds.keys():
         if verbose:
-            print k
-        numbatches = len(ds[k]) / batch_size + 1
+            print(k)
+        numbatches = int(len(ds[k]) / batch_size) + 1
         for minibatch in range(numbatches):
             caps = ds[k][minibatch::numbatches]
             caption = [captions[c] for c in caps]

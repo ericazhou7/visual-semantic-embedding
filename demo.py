@@ -126,7 +126,7 @@ def compute_fromfile(net, loc, base_path='/ais/gobi3/u/rkiros/coco/images/val201
     feats = numpy.zeros((len(imagelist), 4096), dtype='float32')
 
     for minibatch in range(numbatches):
-        print minibatch * batchsize
+        print(minibatch * batchsize)
         idx = inds[minibatch::numbatches]
         batch = [imagelist[i] for i in idx]
         ims = numpy.zeros((len(idx), 3, 224, 224), dtype='float32')
@@ -181,7 +181,7 @@ def build_convnet():
     """
     Construct VGG-19 convnet
     """
-    print 'Building model...'
+    print('Building model...')
     net = {}
     net['input'] = InputLayer((None, 3, 224, 224))
     net['conv1_1'] = ConvLayer(net['input'], 64, 3, pad=1)
@@ -210,7 +210,7 @@ def build_convnet():
     net['fc8'] = DenseLayer(net['fc7'], num_units=1000, nonlinearity=None)
     net['prob'] = NonlinearityLayer(net['fc8'], softmax)
 
-    print 'Loading parameters...'
+    print('Loading parameters...')
     output_layer = net['prob']
     model = pkl.load(open(path_to_vgg))
     lasagne.layers.set_all_param_values(output_layer, model['param values'])

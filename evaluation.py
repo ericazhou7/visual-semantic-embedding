@@ -11,20 +11,20 @@ def evalrank(model, data, split='dev'):
     Evaluate a trained model on either dev or test
     data options: f8k, f30k, coco
     """
-    print 'Loading dataset'
+    print('Loading dataset')
     if split == 'dev':
         X = load_dataset(data, load_train=False)[1]
     else:
         X = load_dataset(data, load_train=False)[2]
 
-    print 'Computing results...'
+    print('Computing results...')
     ls = encode_sentences(model, X[0])
     lim = encode_images(model, X[1])
 
     (r1, r5, r10, medr) = i2t(lim, ls)
-    print "Image to text: %.1f, %.1f, %.1f, %.1f" % (r1, r5, r10, medr)
+    print("Image to text: %.1f, %.1f, %.1f, %.1f" % (r1, r5, r10, medr))
     (r1i, r5i, r10i, medri) = t2i(lim, ls)
-    print "Text to image: %.1f, %.1f, %.1f, %.1f" % (r1i, r5i, r10i, medri)
+    print("Text to image: %.1f, %.1f, %.1f, %.1f" % (r1i, r5i, r10i, medri))
 
 def i2t(images, captions, npts=None):
     """
@@ -33,7 +33,7 @@ def i2t(images, captions, npts=None):
     Captions: (5N, K) matrix of captions
     """
     if npts == None:
-        npts = images.shape[0] / 5
+        npts = int(images.shape[0] / 5)
     index_list = []
 
     ranks = numpy.zeros(npts)
@@ -69,7 +69,7 @@ def t2i(images, captions, npts=None):
     Captions: (5N, K) matrix of captions
     """
     if npts == None:
-        npts = images.shape[0] / 5
+        npts = int(images.shape[0] / 5)
     ims = numpy.array([images[i] for i in range(0, len(images), 5)])
 
     ranks = numpy.zeros(5 * npts)
